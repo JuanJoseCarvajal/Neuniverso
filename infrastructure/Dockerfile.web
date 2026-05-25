@@ -1,0 +1,65 @@
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@8.9.2
+
+# Copy workspace files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/web ./apps/web
+COPY packages ./packages
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build
+RUN pnpm run build --filter=mai-natural
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm and dumb-init for proper signal handling
+RUN npm install -g pnpm@8.9.2 && \
+    apk add --no-cache dumb-init
+
+# Copy built application from builder
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml ./
+
+# Install production dependencies only
+RUN cd apps/web && pnpm install --frozen-lockfile --production && cd ../..
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
+
+# Set working directory to web app
+WORKDIR /app/apps/web
+
+# Change ownership to nodejs user
+RUN chown -R nextjs:nodejs /app
+
+# Switch to non-root user
+USER nextjs
+
+# Environment
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
+
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node_modules/.bin/next", "start"]
