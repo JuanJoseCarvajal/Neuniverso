@@ -1,0 +1,25 @@
+{
+  "name": "neuniverso",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Monorepo enterprise-grade para la plataforma inmersiva NEUNIVERSO.",
+  "author": "Equipo NEUNIVERSO",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*",
+    "infrastructure/*",
+    "scripts/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "turbo run format"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0"
+  }
+}
