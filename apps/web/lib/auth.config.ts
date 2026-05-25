@@ -1,4 +1,5 @@
-import type { NextAuthConfig } from 'next-auth';
+import type { NextAuthConfig, Session, User } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 
 const authConfig: NextAuthConfig = {
   providers: [],
@@ -7,7 +8,7 @@ const authConfig: NextAuthConfig = {
     signIn: '/login',
   },
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.sub || '';
         (session.user as { id: string; role?: string }).role = token.role as
@@ -16,7 +17,7 @@ const authConfig: NextAuthConfig = {
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.sub = user.id;
         token.role = (user as { id: string; role?: string }).role;
