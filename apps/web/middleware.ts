@@ -1,15 +1,6 @@
-import { NextResponse } from 'next/server';
-import NextAuth from 'next-auth';
-import authConfig from './lib/auth.config';
+import { NextResponse, type NextRequest } from 'next/server';
 
-const { auth } = NextAuth(authConfig);
-
-// Rutas que requieren autenticación
-const PROTECTED_ROUTES = ['/dashboard', '/account', '/admin'];
-// Rutas que además requieren rol admin
-const ADMIN_ROUTES = ['/admin'];
-
-export default auth((request) => {
+export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/dashboard')) {
@@ -17,33 +8,8 @@ export default auth((request) => {
     return NextResponse.redirect(new URL(accountPath, request.url));
   }
 
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-  const isAdminRoute = ADMIN_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  if (isProtectedRoute) {
-    if (!request.auth) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set(
-        'callbackUrl',
-        `${request.nextUrl.pathname}${request.nextUrl.search}`
-      );
-      return NextResponse.redirect(loginUrl);
-    }
-
-    if (isAdminRoute) {
-      const role = (request.auth.user as { id: string; role?: string })?.role;
-      if (role !== 'admin') {
-        return NextResponse.redirect(new URL('/account', request.url));
-      }
-    }
-  }
-
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
