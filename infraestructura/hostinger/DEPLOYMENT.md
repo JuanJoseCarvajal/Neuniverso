@@ -1,51 +1,191 @@
 # Guía de Deployment en Hostinger — NEUNIVERSO
 
-Esta guía describe el proceso recomendado para desplegar NEUNIVERSO en Hostinger (VPS/Cloud).
+Despliegue directo sin Docker. Usa Node.js, pnpm, PM2 y NGINX.
 
 ## Requisitos
 - VPS Hostinger (Ubuntu 22.04+ recomendado)
-- Docker y Docker Compose
-- Dominio configurado (neuniverso.com)
-- Acceso SSH
+- Node.js >= 20 (instálalo con `nvm` o del repositorio oficial)
+- pnpm (`npm install -g pnpm`)
+- PM2 (`npm install -g pm2`)
+- NGINX (para proxy frontal)
+- Dominio configurado
 
 ## Pasos principales
 
-1. **Preparar el servidor**
-   - Actualiza el sistema: `sudo apt update && sudo apt upgrade -y`
-   - Instala Docker: [Guía oficial Docker](https://docs.docker.com/engine/install/ubuntu/)
-   - Instala Docker Compose: [Guía oficial Compose](https://docs.docker.com/compose/install/)
-   - Configura usuario y firewall (UFW)
+### 1. Preparar el servidor
 
-2. **Clonar el repositorio**
-   - `git clone https://github.com/tu-org/neuniverso.git`
-   - `cd neuniverso`
+```bash
+# Actualizar sistema
+sudo apt update && sudo apt upgrade -y
 
-3. **Configurar variables de entorno**
-   - Copia `.env.example` a `.env` y completa los valores
+# Instalar Node.js (alternativa: usar nvm)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
 
-4. **Configurar Docker y NGINX**
-   - Edita los archivos en `/infrastructure/docker` y `/infrastructure/hostinger` según tu entorno
-   - Configura certificados SSL con Let's Encrypt
+# Instalar pnpm
+npm install -g pnpm
 
-5. **Desplegar servicios**
-   - `docker compose up -d`
-   - Verifica logs y estado de los contenedores
+# Instalar PM2
+npm install -g pm2
 
-6. **Automatización y monitoreo**
-   - Configura PM2 para procesos Node.js si aplica
-   - Configura monitoreo y backups
+# Instalar NGINX
+sudo apt install -y nginx
+```
 
-## Seguridad y optimización
-- Habilita HTTPS y redirección forzada
-- Usa variables de entorno seguras
-- Aplica hardening básico al servidor
-- Optimiza Node.js y PostgreSQL para producción
+### 2. Clonar y configurar el repositorio
+
+```bash
+cd /home/tu_usuario
+git clone https://github.com/tu-org/neuniverso.git
+cd neuniverso
+cp .env.example .env
+# Edita .env y asegúrate de que NODE_ENV=production y NEXT_PUBLIC_APP_URL=https://tu-dominio.com
+```
+
+### 3. Instalar dependencias y construir
+
+```bash
+pnpm install
+pnpm --dir apps/web build
+```
+
+### 4. Iniciar la app con PM2
+
+```bash
+# Desde la raíz del repositorio
+./scripts/deploy-hostinger.sh
+```
+
+O manualmente:
+
+```bash
+cd apps/web
+pm2 start "pnpm start" --name neuniverso
+pm2 save
+```
+
+Para que PM2 inicie automáticamente al reiniciar el servidor:
+
+```bash
+pm2 startup
+# (Copia y ejecuta el comando que te devuelve)
+pm2 save
+```
+
+### 5. Configurar NGINX como proxy frontal
+
+```bash
+# Ejecuta el script de configuración (requiere sudo)
+sudo bash scripts/setup-nginx.sh tu-dominio.com
+```
+
+O configura manualmente en `/etc/nginx/sites-available/tu-dominio.com`:
+
+```nginx
+upstream neuniverso_app {
+    server localhost:3000;
+}
+
+server {
+    listen 80;
+    server_name tu-dominio.com www.tu-dominio.com;
+
+    location / {
+        proxy_pass http://neuniverso_app;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Luego:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/tu-dominio.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### 6. Configurar HTTPS con Let's Encrypt (recomendado)
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d tu-dominio.com -d www.tu-dominio.com
+```
+
+Esto configura HTTPS automáticamente y renueva cada 90 días.
+
+### 7. Configurar DNS en Hostinger
+
+En el panel de control de Hostinger:
+- Ve a **Manage DNS records**
+- Agrega o edita:
+  - Tipo `A`, Nombre `@`, Valor: `IP_PUBLICA_DEL_VPS`
+  - Tipo `A`, Nombre `www`, Valor: `IP_PUBLICA_DEL_VPS`
+- Espera 5-15 minutos para propagación
+
+## Monitoreo y mantenimiento
+
+### Ver logs en vivo
+```bash
+pm2 logs neuniverso
+```
+
+### Reiniciar la app
+```bash
+pm2 restart neuniverso
+```
+
+### Ver estado
+```bash
+pm2 status
+```
+
+### Detener
+```bash
+pm2 stop neuniverso
+```
+
+## Automatización (opcional)
+
+Usar systemd en lugar de PM2 (más directo):
+
+```bash
+# Copiar archivo de servicio
+sudo cp scripts/neuniverso.service /etc/systemd/system/
+
+# Editar rutas de usuario
+sudo nano /etc/systemd/system/neuniverso.service
+
+# Habilitar y arrancar
+sudo systemctl daemon-reload
+sudo systemctl enable neuniverso
+sudo systemctl start neuniverso
+
+# Ver estado
+sudo systemctl status neuniverso
+```
 
 ## Troubleshooting
-- Revisa logs de Docker y NGINX
-- Verifica puertos y firewall
-- Consulta la documentación oficial de cada servicio
+
+### La app no responde
+```bash
+pm2 logs neuniverso
+```
+
+### NGINX devuelve 502 Bad Gateway
+- Verifica que la app está corriendo: `pm2 list`
+- Revisa logs de NGINX: `sudo tail -f /var/log/nginx/error.log`
+
+### Certificado SSL no renueva
+```bash
+sudo certbot renew --dry-run
+sudo systemctl restart nginx
+```
 
 ---
 
 **Toda la experiencia y documentación debe estar en español.**
+

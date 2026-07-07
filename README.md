@@ -1,39 +1,47 @@
 # NEUNIVERSO
 
-**Arquitectura de Nuevas Realidades**
+Base mínima para un sitio web moderno de NEUNIVERSO, preparada para arrancar desde cero y desplegarse en Hostinger sin Docker.
 
-Repositorio monorepo enterprise-grade para la plataforma inmersiva NEUNIVERSO.
+## Qué incluye
 
-## Descripción
+- Aplicación web en Next.js y React
+- Despliegue directo sin Docker (Node.js + PM2 + NGINX)
+- Scripts listos para Hostinger
+- NGINX como proxy frontal
 
-NEUNIVERSO es un ecosistema digital inmersivo, un sistema operativo de conciencia y una arquitectura digital simbólica. Inspirado en experiencias cinematográficas, interfaces espaciales y lujo cósmico, está diseñado para expandir la experiencia humana y crear nuevas realidades.
+## Desarrollo local
 
-## Estructura del Monorepo
+```bash
+pnpm install
+pnpm dev
+```
 
-- `/apps` — Aplicaciones principales (web, admin, docs)
-- `/packages` — Paquetes compartidos (ui, config, design-tokens, auth, database, analytics, ai)
-- `/services` — Microservicios (api, realtime, oracle, payments, notifications)
-- `/infrastructure` — Infraestructura y despliegue (docker, hostinger, monitoring, deploy)
-- `/scripts` — Automatización y utilidades
+Accede a http://localhost:3000
 
-## Stack Tecnológico
+## Despliegue en Hostinger (sin Docker)
 
-- **Frontend:** Next.js, React, TypeScript, Tailwind CSS, Three.js, Zustand, TanStack Query, shadcn/ui
-- **Backend:** Node.js, NestJS, PostgreSQL, Prisma, Redis, WebSockets, Stripe
-- **Infraestructura:** Docker, NGINX, PM2, CI/CD, GitHub Actions, Hostinger
+1. Clona el repo en tu VPS Hostinger
+2. Instala Node.js, pnpm y PM2
+3. Crea `.env` a partir de `.env.example`
+4. Ejecuta:
+
+```bash
+./scripts/deploy-hostinger.sh
+```
+
+5. Configura NGINX:
+
+```bash
+sudo bash scripts/setup-nginx.sh tu-dominio.com
+```
+
+6. Configura HTTPS con Let's Encrypt:
+
+```bash
+sudo certbot --nginx -d tu-dominio.com -d www.tu-dominio.com
+```
 
 ## Documentación
 
-Toda la documentación, comentarios y experiencia de usuario están en español.
-
-## Deployment
-
-Optimizado para Hostinger (VPS/Cloud), Docker Compose, NGINX, SSL, scripts de despliegue y monitoreo.
-
-## Contribución
-
-Sigue las mejores prácticas enterprise-grade y mantén la coherencia en español en toda la experiencia y documentación.
-
----
-
-**Dominio principal:** [neuniverso.com](https://neuniverso.com)
+- [Guía completa de despliegue](infraestructura/hostinger/DEPLOYMENT.md)
+- [Variables de entorno](.env.example)

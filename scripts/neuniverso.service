@@ -1,0 +1,18 @@
+[Unit]
+Description=NEUNIVERSO Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=tu_usuario
+WorkingDirectory=/home/tu_usuario/neuniverso/apps/web
+Environment="NODE_ENV=production"
+Environment="PATH=/home/tu_usuario/.local/share/pnpm/node_modules/.bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/tu_usuario/.local/share/pnpm/node_modules/.bin/pm2 start pnpm --name neuniverso --watch --watch-delay 1000 -- start
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

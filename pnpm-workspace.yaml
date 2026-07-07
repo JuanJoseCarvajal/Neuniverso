@@ -1,9 +1,2 @@
-# Archivo de configuración de workspaces para pnpm
-# Toda la documentación y comentarios en español
-
 packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'services/*'
-  - 'infrastructure/*'
-  - 'scripts/*'
+  - 'apps/web'

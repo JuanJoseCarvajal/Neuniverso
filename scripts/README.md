@@ -1,15 +1,47 @@
 # Scripts Automatizados — NEUNIVERSO
 
-Esta carpeta contendrá scripts para automatización de tareas, despliegue, backups, migraciones y utilidades para el monorepo NEUNIVERSO.
+Scripts de despliegue y automatización para NEUNIVERSO en Hostinger (sin Docker).
 
-## Ejemplos de scripts a incluir
-- Despliegue automático a Hostinger
-- Backups de base de datos
-- Limpieza de logs
-- Generación de certificados SSL
-- Migraciones de base de datos
-- Seed de datos
+## `deploy-hostinger.sh`
 
-## Notas
-- Todos los scripts deben estar documentados en español
-- Usar convenciones enterprise-grade y seguridad
+Despliegue completo sin Docker.
+
+```bash
+./scripts/deploy-hostinger.sh
+```
+
+Qué hace:
+- Instala dependencias con pnpm
+- Construye la app Next.js
+- Inicia el proceso con PM2
+- Guarda el estado de PM2
+
+## `setup-nginx.sh`
+
+Configura NGINX como proxy frontal (requiere sudo).
+
+```bash
+sudo bash ./scripts/setup-nginx.sh tu-dominio.com
+```
+
+Qué hace:
+- Crea configuración de NGINX
+- Habilita el sitio
+- Valida y recarga NGINX
+
+## `neuniverso.service`
+
+Archivo de servicio systemd (alternativa a PM2).
+
+Instalación:
+```bash
+sudo cp scripts/neuniverso.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable neuniverso
+sudo systemctl start neuniverso
+```
+
+---
+
+**Nota:** Todos los scripts están configurados para despliegue directo sin Docker.
+
