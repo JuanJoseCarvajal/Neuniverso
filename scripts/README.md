@@ -16,6 +16,20 @@ Qué hace:
 - Inicia el proceso con PM2
 - Guarda el estado de PM2
 
+## `hostinger-remote-deploy.sh`
+
+Despliegue remoto desde tu máquina local hacia el servidor Hostinger.
+
+```bash
+./scripts/hostinger-remote-deploy.sh usuario@host /ruta/remota git@github.com:tu-org/neuniverso.git
+```
+
+Qué hace:
+- Prepara el servidor con Node.js, pnpm, PM2 y NGINX
+- Clona o actualiza el repositorio
+- Copia `.env.example` a `.env` si no existe
+- Construye la app y ejecuta el deploy
+
 ## `setup-nginx.sh`
 
 Configura NGINX como proxy frontal (requiere sudo).

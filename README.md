@@ -41,6 +41,16 @@ sudo bash scripts/setup-nginx.sh tu-dominio.com
 sudo certbot --nginx -d tu-dominio.com -d www.tu-dominio.com
 ```
 
+## Despliegue remoto desde tu máquina local
+
+Si quieres ejecutar el deploy desde tu PC hacia el servidor Hostinger, usa:
+
+```bash
+./scripts/hostinger-remote-deploy.sh usuario@host /ruta/remota git@github.com:tu-org/neuniverso.git
+```
+
+Este script prepara el servidor, clona/actualiza el repo y ejecuta el deploy sin Docker.
+
 ## Documentación
 
 - [Guía completa de despliegue](infraestructura/hostinger/DEPLOYMENT.md)
